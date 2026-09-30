@@ -1,6 +1,7 @@
 package com.example.baitap2_lab3
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -29,17 +30,22 @@ class SecondActivity : AppCompatActivity() {
         }
 
         // Using scope function: let to receive and handle Intent extra safely
-        intent.getSerializableExtra("STUDENT_DATA")?.let {
-            if (it is Student) {
-                // Using scope function: with for working with student properties
-                with(it) {
-                    binding.tvDetailInfo.text = "Đã nhận dữ liệu sinh viên qua Intent:\n\n" +
-                            "Họ và tên: $fullName\n" +
-                            "Mã sinh viên: $msv\n" +
-                            "Lớp: $studentClass\n" +
-                            "Tuổi: $age\n" +
-                            "Email: $email"
-                }
+        val student = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getSerializableExtra("STUDENT_DATA", Student::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getSerializableExtra("STUDENT_DATA") as? Student
+        }
+
+        student?.let {
+            // Using scope function: with for working with student properties
+            with(it) {
+                binding.tvDetailInfo.text = "Đã nhận dữ liệu sinh viên qua Intent:\n\n" +
+                        "Họ và tên: $fullName\n" +
+                        "Mã sinh viên: $msv\n" +
+                        "Lớp: $studentClass\n" +
+                        "Tuổi: $age\n" +
+                        "Email: $email"
             }
         } ?: run {
             binding.tvDetailInfo.text = "Không nhận được dữ liệu sinh viên."
@@ -49,11 +55,12 @@ class SecondActivity : AppCompatActivity() {
         binding.btnBack.run {
             setOnClickListener {
                 // Using Intent to navigate back to MainActivity (Screen 1)
-                val intent = Intent(this@SecondActivity, MainActivity::class.java).apply {
+                Intent(this@SecondActivity, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                }.let { intent ->
+                    startActivity(intent)
+                    finish()
                 }
-                startActivity(intent)
-                finish()
             }
         }
     }
